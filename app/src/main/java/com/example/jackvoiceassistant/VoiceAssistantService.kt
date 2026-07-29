@@ -97,12 +97,17 @@ class VoiceAssistantService : Service(), RecognitionListener {
 
         val matchedApp = appMap.entries.firstOrNull { command.contains(it.key) }
 
-        if (command.startsWith("open") && matchedApp != null) {
+    if (command.startsWith("open") && matchedApp != null) {
             speak("Yes sir, opening ${matchedApp.key}")
             launchApp(matchedApp.value, matchedApp.key)
         } else {
-            speak("You said: $command")
-        }
+            val typed = MyAccessibilityService.instance?.typeTextIntoFocusedField(command) ?: false
+            if (typed) {
+                speak("Typed it, sir")
+            } else {
+                speak("You said: $command")
+            }
+}
     }
 
     private fun launchApp(packageName: String, appLabel: String) {
