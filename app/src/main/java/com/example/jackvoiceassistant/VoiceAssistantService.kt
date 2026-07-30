@@ -109,10 +109,11 @@ class VoiceAssistantService : Service(), RecognitionListener {
         isListening = false
         val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
         val spokenText = matches?.firstOrNull()?.lowercase(Locale.US) ?: ""
-        handleCommand(spokenText)
+        speak("I heard: $spokenText")
         android.os.Handler(mainLooper).postDelayed({
+            handleCommand(spokenText)
             startListening()
-        }, 700)
+        }, 1500)
     }
 
     private fun handleCommand(command: String) {
