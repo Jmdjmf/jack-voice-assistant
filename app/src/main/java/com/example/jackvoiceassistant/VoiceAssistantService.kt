@@ -12,6 +12,8 @@ import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import android.speech.tts.TextToSpeech
+import android.speech.tts.Voice
+import android.media.AudioManager
 import androidx.core.app.NotificationCompat
 import java.util.Locale
 
@@ -19,17 +21,20 @@ class VoiceAssistantService : Service(), RecognitionListener {
 
     private var speechRecognizer: SpeechRecognizer? = null
     private var textToSpeech: TextToSpeech? = null
+    private var audioManager: AudioManager? = null
     private val channelId = "jack_voice_channel"
     private var isListening = false
 
     override fun onCreate() {
         super.onCreate()
         startForegroundNotification()
+        audioManager = getSystemService(AUDIO_SERVICE) as AudioManager
         textToSpeech = TextToSpeech(this) { status ->
             if (status == TextToSpeech.SUCCESS) {
                 textToSpeech?.language = Locale.US
-                textToSpeech?.setSpeechRate(0.85f)
-                textToSpeech?.setPitch(1.0f)
+                textToSpeech?.setSpeechRate(0.9f)
+                textToSpeech?.setPitch(0.7f)
+                selectDeepMaleVoice()
                 speak("Hello sir, I am listening")
             }
         }
@@ -58,15 +63,41 @@ class VoiceAssistantService : Service(), RecognitionListener {
         startForeground(1, notification)
     }
 
+    private fun selectDeepMaleVoice() {
+        val voices = textToSpeech?.voices ?: return
+        val maleVoice = voices.firstOrNull {
+            it.name.contains("male", ignoreCase = true) && !it.name.contains("female", ignoreCase = true)
+        }
+        if (maleVoice != null) {
+            textToSpeech?.voice = maleVoice
+        }
+    }
+
+    private fun muteSystemBeep() {
+        audioManager?.adjustStreamVolume(
+            AudioManager.STREAM_MUSIC,
+            AudioManager.ADJUST_MUTE,
+            0
+        )
+    }
+
+    private fun unmuteSystemBeep() {
+        audioManager?.adjustStreamVolume(
+            AudioManager.STREAM_MUSIC,
+            AudioManager.ADJUST_UNMUTE,
+            0
+        )
+    }
+
     private fun startListening() {
         if (isListening) return
         val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
             putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
             putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.US)
             putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, false)
-            putExtra("android.speech.extra.DICTATION_MODE", true)
         }
         isListening = true
+        muteSystemBeep()
         speechRecognizer?.startListening(intent)
     }
 
@@ -76,6 +107,7 @@ class VoiceAssistantService : Service(), RecognitionListener {
 
     override fun onResults(results: Bundle?) {
         isListening = false
+        unmuteSystemBeep()
         val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
         val spokenText = matches?.firstOrNull()?.lowercase(Locale.US) ?: ""
         handleCommand(spokenText)
