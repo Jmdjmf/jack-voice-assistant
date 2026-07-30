@@ -97,6 +97,7 @@ class VoiceAssistantService : Service(), RecognitionListener {
             putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, false)
         }
         isListening = true
+        speechRecognizer?.cancel()
         speechRecognizer?.startListening(intent)
     }
 
@@ -157,9 +158,13 @@ class VoiceAssistantService : Service(), RecognitionListener {
 
     override fun onError(error: Int) {
         isListening = false
+        val delayMillis = when (error) {
+            SpeechRecognizer.ERROR_NO_MATCH, SpeechRecognizer.ERROR_SPEECH_TIMEOUT -> 300L
+            else -> 1500L
+        }
         android.os.Handler(mainLooper).postDelayed({
             startListening()
-        }, 700)
+        }, delayMillis)
     }
 
     override fun onReadyForSpeech(params: Bundle?) {}
