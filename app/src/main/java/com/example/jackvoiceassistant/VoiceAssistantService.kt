@@ -28,6 +28,8 @@ class VoiceAssistantService : Service(), RecognitionListener {
         textToSpeech = TextToSpeech(this) { status ->
             if (status == TextToSpeech.SUCCESS) {
                 textToSpeech?.language = Locale.US
+                textToSpeech?.setSpeechRate(0.85f)
+                textToSpeech?.setPitch(1.0f)
                 speak("Hello sir, I am listening")
             }
         }
@@ -62,6 +64,7 @@ class VoiceAssistantService : Service(), RecognitionListener {
             putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
             putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.US)
             putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, false)
+            putExtra("android.speech.extra.DICTATION_MODE", true)
         }
         isListening = true
         speechRecognizer?.startListening(intent)
