@@ -28,7 +28,10 @@ class MyAccessibilityService : AccessibilityService() {
     }
 
     fun typeTextIntoFocusedField(text: String): Boolean {
-        val focusedNode = findFocusedEditableNode(rootInActiveWindow) ?: return false
+        val root = rootInActiveWindow ?: return false
+        val focusedNode = root.findFocus(AccessibilityNodeInfo.FOCUS_INPUT)
+            ?: findFocusedEditableNode(root)
+            ?: return false
 
         val arguments = Bundle()
         arguments.putCharSequence(
@@ -40,7 +43,7 @@ class MyAccessibilityService : AccessibilityService() {
 
     private fun findFocusedEditableNode(root: AccessibilityNodeInfo?): AccessibilityNodeInfo? {
         if (root == null) return null
-        if (root.isFocused && root.isEditable) return root
+        if (root.isEditable && (root.isFocused || root.isAccessibilityFocused)) return root
 
         for (i in 0 until root.childCount) {
             val child = root.getChild(i) ?: continue
