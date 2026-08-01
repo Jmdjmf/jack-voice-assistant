@@ -14,6 +14,7 @@ class MyAccessibilityService : AccessibilityService() {
     override fun onServiceConnected() {
         super.onServiceConnected()
         instance = this
+        Logger.log("MyAccessibilityService: onServiceConnected() fired, instance set")
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
