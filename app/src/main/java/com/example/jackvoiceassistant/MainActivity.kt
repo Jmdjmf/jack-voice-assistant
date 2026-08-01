@@ -15,19 +15,28 @@ import androidx.core.content.ContextCompat
 class MainActivity : AppCompatActivity() {
 
     private lateinit var statusText: TextView
+    private lateinit var logText: TextView
     private val requiredPermissions = arrayOf(
         Manifest.permission.RECORD_AUDIO,
         Manifest.permission.POST_NOTIFICATIONS
     )
     private val permissionRequestCode = 100
 
+    private val logListener: (String) -> Unit = { fullLog ->
+        logText.text = fullLog
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
         statusText = findViewById(R.id.statusText)
+        logText = findViewById(R.id.logText)
         val startButton: Button = findViewById(R.id.startButton)
         val stopButton: Button = findViewById(R.id.stopButton)
+        val testTypeButton: Button = findViewById(R.id.testTypeButton)
+
+        Logger.addListener(logListener)
 
         startButton.setOnClickListener {
             if (hasAllPermissions()) {
@@ -40,6 +49,28 @@ class MainActivity : AppCompatActivity() {
         stopButton.setOnClickListener {
             stopVoiceService()
         }
+
+        testTypeButton.setOnClickListener {
+            testTyping()
+        }
+    }
+
+    private fun testTyping() {
+        Logger.log("Test Type button pressed")
+        val serviceInstance = MyAccessibilityService.instance
+        if (serviceInstance == null) {
+            Logger.log("RESULT: Accessibility service instance is NULL")
+            Toast.makeText(this, "Accessibility service not connected", Toast.LENGTH_LONG).show()
+            return
+        }
+        Logger.log("Accessibility service found, attempting to type...")
+        val success = serviceInstance.typeTextIntoFocusedField("hello from jack test")
+        Logger.log("Type result: $success")
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        Logger.removeListener(logListener)
     }
 
     private fun hasAllPermissions(): Boolean {
