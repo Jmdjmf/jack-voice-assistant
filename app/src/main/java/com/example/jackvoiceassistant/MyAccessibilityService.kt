@@ -28,17 +28,32 @@ class MyAccessibilityService : AccessibilityService() {
     }
 
     fun typeTextIntoFocusedField(text: String): Boolean {
-        val root = rootInActiveWindow ?: return false
-        val focusedNode = root.findFocus(AccessibilityNodeInfo.FOCUS_INPUT)
-            ?: findFocusedEditableNode(root)
-            ?: return false
+        val root = rootInActiveWindow
+        if (root == null) {
+            Logger.log("rootInActiveWindow is NULL")
+            return false
+        }
+        Logger.log("Root found: ${root.className}")
+
+        val focusedByInput = root.findFocus(AccessibilityNodeInfo.FOCUS_INPUT)
+        Logger.log("findFocus(FOCUS_INPUT) result: $focusedByInput")
+
+        val focusedNode = focusedByInput ?: findFocusedEditableNode(root)
+        if (focusedNode == null) {
+            Logger.log("No focused editable node found at all")
+            return false
+        }
+
+        Logger.log("Found node: ${focusedNode.className}, editable=${focusedNode.isEditable}")
 
         val arguments = Bundle()
         arguments.putCharSequence(
             AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE,
             text
         )
-        return focusedNode.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, arguments)
+        val result = focusedNode.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, arguments)
+        Logger.log("performAction ACTION_SET_TEXT result: $result")
+        return result
     }
 
     private fun findFocusedEditableNode(root: AccessibilityNodeInfo?): AccessibilityNodeInfo? {
