@@ -95,9 +95,9 @@ class VoiceAssistantService : Service(), RecognitionListener {
             putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
             putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.US)
             putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, false)
-            putExtra("android.speech.extra.SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS", 3000)
-            putExtra("android.speech.extra.SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS", 3000)
-            putExtra("android.speech.extra.SPEECH_INPUT_MINIMUM_LENGTH_MILLIS", 15000)
+            putExtra("android.speech.extra.SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS", 8000)
+            putExtra("android.speech.extra.SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS", 8000)
+            putExtra("android.speech.extra.SPEECH_INPUT_MINIMUM_LENGTH_MILLIS", 30000)
         }
         isListening = true
         speechRecognizer?.cancel()
@@ -141,16 +141,28 @@ class VoiceAssistantService : Service(), RecognitionListener {
         val matchedApp = appMap.entries.firstOrNull { command.contains(it.key) }
         Logger.log("startsWith('open')=${command.startsWith("open")}, matchedApp=${matchedApp?.key}")
 
+        val typeTriggers = listOf("type for ", "type ", "search for ", "search ")
+        val matchingTrigger = typeTriggers.firstOrNull { command.startsWith(it) }
+
         if (command.startsWith("open") && matchedApp != null) {
             speak("Yes sir, opening ${matchedApp.key}")
             launchApp(matchedApp.value, matchedApp.key)
-        } else {
-            val typed = MyAccessibilityService.instance?.typeTextIntoFocusedField(command) ?: false
-            if (typed) {
-                speak("Typed it, sir")
+        } else if (matchingTrigger != null) {
+            val textToType = command.removePrefix(matchingTrigger).trim()
+            val serviceInstance = MyAccessibilityService.instance
+            if (serviceInstance == null) {
+                speak("Service is null")
             } else {
-                speak("You said: $command")
+                val typed = serviceInstance.typeTextIntoFocusedField(textToType)
+                if (typed) {
+                    speak("Typed $textToType, sir")
+                } else {
+                    speak("Found no text box")
+                }
             }
+        } else {
+            speak("You said: $command")
+        }
 }
     }
 
