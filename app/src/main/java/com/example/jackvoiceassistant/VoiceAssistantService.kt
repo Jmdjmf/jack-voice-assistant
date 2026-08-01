@@ -119,7 +119,11 @@ class VoiceAssistantService : Service(), RecognitionListener {
     }
 
     private fun handleCommand(command: String) {
-        if (command.isBlank()) return
+        Logger.log("handleCommand received: '$command'")
+        if (command.isBlank()) {
+            Logger.log("Command was blank, ignoring")
+            return
+        }
 
         val appMap = mapOf(
             "youtube" to "com.google.android.youtube",
@@ -135,8 +139,9 @@ class VoiceAssistantService : Service(), RecognitionListener {
         )
 
         val matchedApp = appMap.entries.firstOrNull { command.contains(it.key) }
+        Logger.log("startsWith('open')=${command.startsWith("open")}, matchedApp=${matchedApp?.key}")
 
-    if (command.startsWith("open") && matchedApp != null) {
+        if (command.startsWith("open") && matchedApp != null) {
             speak("Yes sir, opening ${matchedApp.key}")
             launchApp(matchedApp.value, matchedApp.key)
         } else {
