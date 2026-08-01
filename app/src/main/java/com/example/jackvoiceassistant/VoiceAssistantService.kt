@@ -163,7 +163,6 @@ class VoiceAssistantService : Service(), RecognitionListener {
         } else {
             speak("You said: $command")
         }
-}
     }
 
     private fun launchApp(packageName: String, appLabel: String) {
